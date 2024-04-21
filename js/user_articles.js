@@ -136,6 +136,7 @@ async function get_tags(userId){
         const data = JSON.parse(event.data);
         load_filter_options(data.saved);
         modal_load_filter_options(data.saved);
+        modify_tag(data.saved);
     };
     
     // Event handler for WebSocket connection close
@@ -145,7 +146,6 @@ async function get_tags(userId){
 }
 
 function load_filter_options(data){
-    console.log(data);
     
     const select_option_ele = document.getElementById("filterOption");
     const option_ele = document.createElement("option");
@@ -163,9 +163,29 @@ function load_filter_options(data){
 }
 
 function modal_load_filter_options(data){
-    console.log(data);
     
     const select_option_ele = document.getElementById("tagType");
+    const option_ele = document.createElement("option");
+    option_ele.innerText = "--";
+    select_option_ele.append(option_ele);
+
+    data.forEach(tag => {
+        const option_ele_text = document.createElement("option");
+        option_ele_text.innerText = tag.tag_name;
+        select_option_ele.append(option_ele_text);
+    });
+        
+    const option_ele1 = document.createElement("option");
+    option_ele1.innerText = "New Tag";
+    option_ele1.setAttribute("value","new");
+    select_option_ele.append(option_ele1);
+
+}
+
+
+function modify_tag(data){
+    
+    const select_option_ele = document.getElementById("tagModify");
     const option_ele = document.createElement("option");
     option_ele.innerText = "--";
     select_option_ele.append(option_ele);
@@ -193,6 +213,20 @@ function checkIfCustom() {
         customTagInputWrapper.style.display = 'none';
     }
 }
+
+
+
+function modifyTagCustom() {
+    var select = document.getElementById('tagModify');
+    var modifycustomTagInputWrapper = document.getElementById('modifycustomTagInputWrapper');
+    
+    if (select.value === 'new') {
+        modifycustomTagInputWrapper.style.display = 'block';
+    } else {
+        modifycustomTagInputWrapper.style.display = 'none';
+    }
+}
+
 
 const modal_search = document.getElementById("modal-search");
 modal_search.addEventListener('click', async (e) => {
@@ -367,7 +401,7 @@ function displaySearchResultsFilter(results) {
         resultItem.classList.add('searchResult');
         const contentWithBreaks = result.content.replace(/\n/g, '<br>');
         resultItem.innerHTML = `
-            <h1>Title: ${result.title}</h1>
+            <div style="display:flex;"><h1>Title: ${result.title}</h1> <button article_id=${result.id} onClick="updateTag(event)" type="" style="height: 10%;margin-top: 25px;margin-left: 95px;">Update Tag</button></div>
             <h2>Sentiment: ${result.sentiment}</h2>
             <hr>
             <p>${contentWithBreaks}</p>
@@ -384,3 +418,95 @@ logOut.addEventListener("click", async (e) => {
     window.location.href = '/index.html';    
 })
 
+
+function updateTag(event){
+    try{
+        const article_id = event.srcElement.attributes.getNamedItem('article_id').value;
+
+        const modify_tag_modal = document.getElementById("updateTagModal");
+        modify_tag_modal.setAttribute("article_id", article_id);
+        modify_tag_modal.style.display = 'block';
+
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modify_tag_modal.style.display = 'none';
+            }
+        }
+        const closeBtnModify = document.querySelector('.closemodify');
+        closeBtnModify.addEventListener('click', function() {
+            modify_tag_modal.style.display = 'none';
+        });
+
+
+    }catch(error){
+        console.error(error);
+    }
+}
+
+
+const modify_modal_submit = document.getElementById("modify-modal-submit");
+modify_modal_submit.addEventListener('click', async (e) => {
+    
+    e.preventDefault();
+    var tag = "";
+    
+    const new_tag = document.getElementById("modifycustomTagInput").value;
+
+    if(new_tag != ""){
+        tag = new_tag;
+    }else{
+        var selectElement = document.getElementById("tagModify");
+        var selectedOption = selectElement.options[selectElement.selectedIndex];
+
+        var selectedValue = selectedOption.value;
+        var selectedText = selectedOption.textContent;
+        tag = selectedText;
+    }
+    
+    const modify_tag_modal = document.getElementById("updateTagModal");
+    const article_id= modify_tag_modal.getAttribute("article_id");
+
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // Get the user_id parameter value
+    const userId = urlParams.get('user_id');
+    const user_id = userId;
+    
+    const socket = new WebSocket("wss://wiki-keep-9d25a3c99357.herokuapp.com/ws");
+
+    // Event handler for when the WebSocket connection is established
+    socket.onopen = async function(event) {
+    console.log("WebSocket connection established.");
+    
+    // Prepare data to save article
+    const data = {
+        action: "modify_tag",
+        tag: tag,
+        article_id: article_id,
+        user_id: user_id
+    };
+    
+    // Send data to the server
+    socket.send(JSON.stringify(data));
+    };
+
+    // Event handler for incoming messages from the server
+    socket.onmessage = async function(event) {
+        const response = JSON.parse(event.data);
+        if (response) {
+            alert('Update successfully!');
+            const modify_tag_modal = document.getElementById("updateTagModal");
+            modify_tag_modal.setAttribute("article_id", article_id);
+            modify_tag_modal.style.display = 'none';
+        } else {
+            // Handle the case when the submission fails
+        }
+    };
+
+    // Event handler for WebSocket connection close
+    socket.onclose = function(event) {
+        console.log("WebSocket connection closed.");
+    };
+})

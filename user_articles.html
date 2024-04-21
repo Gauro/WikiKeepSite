@@ -53,7 +53,28 @@
         </div>
       
       </div>
+      <div id="updateTagModal" class="modal">
 
+        <!-- Modal content -->
+        <div class="modal-content">
+          <span class="closemodify">&times;</span>
+          <h2>Modify Tag</h2>
+          <form id="" class="tagForm">
+              <div>
+                  <label class="tagLabel" for="tagType">Tag:</label>
+                  <select id="tagModify" name="tagType" class="custom-select" onchange="modifyTagCustom()">
+                  </select>
+              </div>
+              <div id="modifycustomTagInputWrapper" style="display: none;">
+                <label class="tagLabel" for="customTagInput">Custom Tag:</label>
+                <input type="text" id="modifycustomTagInput" name="customTagInput" class="custom-input">
+            </div>
+            <button type="" class="custom-button" id="modify-modal-submit">Apply</button>
+          </form>
+        </div>
+      
+      </div>
+      
     <script src="/js/user_articles.js"></script>
 </body>
 </html>
